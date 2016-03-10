@@ -1,0 +1,124 @@
+---
+title: "Practical Machine Learning Course Project"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Summary
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict the manner in which they did the exercise.
+
+The data for this project come from this source: <http://groupware.les.inf.puc-rio.br/har>. 
+
+
+### Libraries 
+The following libraries were used throughout the code.
+```{r}
+library(caret)
+library(e1071)
+library(randomForest)
+```
+
+### Loading and preprocessing the data
+
+```{r load and clean data, eval=FALSE }
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml-training.csv")
+download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", "pml-training.csv")
+pmldata <- read.csv("pml-training.csv")
+pmltest <- read.csv("pml-testing.csv")
+
+# replace NA with 0 to make things easy in modelings and predictions as there are a lot of NAs in the data set
+pmldata[is.na(pmldata)] <- 0
+pmltest[is.na(pmltest)] <- 0
+```
+
+Use cross validation, the data set was split up into training and cross validation sets in a 3:1 ratio in order to train the model and then test it against the remaining 25% data.
+
+
+```{r cross validation, eval=FALSE}
+trIdx <- createDataPartition(pmldata$classe, p = 3/4, list = FALSE)
+train <- pmldata[trIdx,]
+val <- pmldata[-trIdx,]
+```
+
+Decrease the number of features, as the orignial data has a lot of features, over 150 features, I decided to remove the irrevelant and less important features, firstly I will emit the first eight columns that acted as identifiers for the experiment.Then I will use PCA to select the features that retain 90% of the variance.It turns out we only need 34 PCA components to represent 90% of the original variance, which is great. We succeeded in reducing the feature number from 159 to 34!
+
+```{r pca, eval=FALSE}
+train <- subset(train, select=c(roll_belt:classe))
+val <- subset(val, select=c(roll_belt:classe))
+test <- subset(pmltest, select=c(roll_belt:magnet_forearm_z))
+```
+Use pca preprocessing.
+```{r}
+prepro <- preProcess(train[,-length(train)], method = "pca", thresh = 0.9)
+prepro
+
+```
+
+Reduce the number of predictors.
+```{r}
+reducedFeatures <- predict(prepro, train[,-length(train)])
+reducedTr <- data.frame(reducedFeatures, classe = train$classe)
+pcatr <- subset(reducedTr, select = c(PC1:PC34, classe))
+
+```
+
+### Building a model
+As this is a typical multi classfication problem, my first thought is to use a svm or softmax classifier.The first model I trained is a svm classifier with RBF kernel. 
+
+```{r train svm, eval=FALSE}
+fitsvm <- svm(classe~., data = pcatr)
+```
+
+Test it on validation set
+
+```{r test validation,}
+#use PCA on validation set just as we did in training set
+reducedVal <- predict(prepro, val[,-length(val)])
+pcaVal <- subset(reducedVal, select = c(PC1:PC34))
+```
+
+```{r}
+confusionMatrix(predict(fitsvm, pcaVal), val$classe)
+```
+
+Surprisingly the first try is a good start. The prediction looks good with accuracy about 86% and errors are within acceptable ranges. However I want to perfectly predict the final testing data with 100% correct, I need to improve the model. I tried to change the kernel of Therefore I chose to use another non-linear classifier. Random Forest is very powerful and might do the work.
+
+```{r train random forest, eval=FALSE}
+fitrf <- randomForest(classe~., data = pcatr)
+```
+Use random forest model to predict validation set
+```{r predict random forest result, echo=FALSE}
+print(fitrf)
+confusionMatrix(predict(fitrf, pcaVal), val$classe)
+
+```
+
+The prediction result on validation set is surprisingly awsome to me. Let's see the random forest model.
+
+```{r figure, echo=FALSE}
+plot(fitrf, main = "Random Forest Classifier Error")
+```
+
+
+predict the classes of the test set with random forest classifier.
+
+```{r predict on final test data}
+reducedTest <- predict(prepro, test)
+pcaTest <- subset(reducedTest, select = c(PC1:PC34))
+predict(fitrf, pcaTest)
+
+```
+
+predict the classes of test set with svm classifier.
+```{r predict on final test data with svm}
+predict(fitsvm, pcaTest)
+```
+
+
+### Conclusions
+With the data set generated from multiple measuring instruments, we can accurately predict how well a person is preforming an excercise using a relatively simple machine learning model.The svm model has lower accuracy but has better performance than random forest.
+
