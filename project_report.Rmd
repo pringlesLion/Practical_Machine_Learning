@@ -88,7 +88,7 @@ confusionMatrix(predict(fitsvm, pcaVal), val$classe)
 The first try is a nice start. The prediction looks good and errors are within acceptable ranges. However I want to perfectly predict the final testing data with 100% accuracy, I need to improve the model. I tried to change the kernels and adjust the parameters, unfortunately, it didn't reach my expectations. Then I decided to try another non-linear classifier, which is Random Forest.  
 
 ```{r train random forest, eval=FALSE}
-fitrf <- randomForest(classe~., data = pcatr)
+fitrf <- randomForest(classe~., data = pcatr, ntree=100)
 ```
 Use random forest model to predict validation set
 ```{r predict random forest result, echo=FALSE}
@@ -103,7 +103,7 @@ The prediction result on validation set is surprisingly awsome to me. Let's plot
 plot(fitrf, main = "Random Forest Classifier Error")
 ```
 
-As we can see from the figure, we can set the tree number to be 100 and will achieve the same result. And it will improve the performance. I also tried building a random forest model without preprocessing the data, the prediction result is very close to the one with pca preprocessing.The fact is true that preprocessing data has little impact on random forest's model training.
+As we can see from the figure, the reason I set the number of trees is mostly based on the above picture. The original number of trees is 500 and it took much longer time to train the model. I also tried building a random forest model without preprocessing the data, the prediction result is very close to the one with pca preprocessing.The fact is true that preprocessing data has little impact on random forest's model training.
  
 Predict the classes of the test set with random forest classifier.
 
@@ -121,5 +121,5 @@ predict(fitsvm, pcaTest)
 
 
 ### Conclusions
-With the data set generated from multiple measuring instruments, we can accurately predict how well a person is preforming an excercise using a relatively simple machine learning model.During my experiment, the svm model has lower accuracy but has better performance than random forest model.So for scalabitly
+With the data set generated from multiple measuring instruments, we can accurately predict how well a person is preforming an excercise using a relatively simple machine learning model.During my experiment, the svm model has lower accuracy in this case and it relies on the data preprocessing.
 
