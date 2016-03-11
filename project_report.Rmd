@@ -39,6 +39,7 @@ Use cross validation, the data set was split up into training and cross validati
 
 
 ```{r cross validation, eval=FALSE}
+set.seed(34525)
 trIdx <- createDataPartition(pmldata$classe, p = 3/4, list = FALSE)
 train <- pmldata[trIdx,]
 val <- pmldata[-trIdx,]
@@ -103,7 +104,7 @@ The prediction result on validation set is surprisingly awsome to me. Let's plot
 plot(fitrf, main = "Random Forest Classifier Error")
 ```
 
-As we can see from the figure, the reason I set the number of trees is mostly based on the above picture. The original number of trees is 500 and it took much longer time to train the model. I also tried building a random forest model without preprocessing the data, the prediction result is very close to the one with pca preprocessing.The fact is true that preprocessing data has little impact on random forest's model training.
+The reason I set the number of trees is mostly based on the above picture. The original number of trees is 500 and it took much longer time to train the model. I also tried building a random forest model without preprocessing the data, the prediction result is very close to the one with pca preprocessing.The fact is true that preprocessing data has little impact on random forest's model training.
  
 Predict the classes of the test set with random forest classifier.
 
