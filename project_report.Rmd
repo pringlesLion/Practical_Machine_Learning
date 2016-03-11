@@ -67,7 +67,7 @@ pcatr <- subset(reducedTr, select = c(PC1:PC34, classe))
 ```
 
 ### Building a model
-As this is a typical multi classfication problem, my first thought is to use a svm or softmax classifier.The first model I trained is a svm classifier with RBF kernel. 
+This is a typical multi classfication problem rather than a regression problem. After investigation, I decided to try the two polular classifiers. One is svm, the other is random forest. The first model I trained is a svm classifier with RBF kernel. 
 
 ```{r train svm, eval=FALSE}
 fitsvm <- svm(classe~., data = pcatr)
@@ -85,7 +85,7 @@ pcaVal <- subset(reducedVal, select = c(PC1:PC34))
 confusionMatrix(predict(fitsvm, pcaVal), val$classe)
 ```
 
-Surprisingly the first try is a good start. The prediction looks good with accuracy about 86% and errors are within acceptable ranges. However I want to perfectly predict the final testing data with 100% correct, I need to improve the model. I tried to change the kernel of Therefore I chose to use another non-linear classifier. Random Forest is very powerful and might do the work.
+The first try is a nice start. The prediction looks good and errors are within acceptable ranges. However I want to perfectly predict the final testing data with 100% accuracy, I need to improve the model. I tried to change the kernels and adjust the parameters, unfortunately, it didn't reach my expectations. Then I decided to try another non-linear classifier, which is Random Forest.  
 
 ```{r train random forest, eval=FALSE}
 fitrf <- randomForest(classe~., data = pcatr)
@@ -97,14 +97,15 @@ confusionMatrix(predict(fitrf, pcaVal), val$classe)
 
 ```
 
-The prediction result on validation set is surprisingly awsome to me. Let's see the random forest model.
+The prediction result on validation set is surprisingly awsome to me. Let's plot this random forest model.
 
 ```{r figure, echo=FALSE}
 plot(fitrf, main = "Random Forest Classifier Error")
 ```
 
-
-predict the classes of the test set with random forest classifier.
+As we can see from the figure, we can set the tree number to be 100 and will achieve the same result. And it will improve the performance. I also tried building a random forest model without preprocessing the data, the prediction result is very close to the one with pca preprocessing.The fact is true that preprocessing data has little impact on random forest's model training.
+ 
+Predict the classes of the test set with random forest classifier.
 
 ```{r predict on final test data}
 reducedTest <- predict(prepro, test)
@@ -113,12 +114,12 @@ predict(fitrf, pcaTest)
 
 ```
 
-predict the classes of test set with svm classifier.
+Predict the classes of test set with svm classifier.
 ```{r predict on final test data with svm}
 predict(fitsvm, pcaTest)
 ```
 
 
 ### Conclusions
-With the data set generated from multiple measuring instruments, we can accurately predict how well a person is preforming an excercise using a relatively simple machine learning model.The svm model has lower accuracy but has better performance than random forest.
+With the data set generated from multiple measuring instruments, we can accurately predict how well a person is preforming an excercise using a relatively simple machine learning model.During my experiment, the svm model has lower accuracy but has better performance than random forest model.So for scalabitly
 
